@@ -1,0 +1,16 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "package.json",
+        "use": "@vercel/node"
+      }
+    ],
+    "functions": {
+      "api/*": {
+        "runtime": "nodejs18.x",
+        "maxDuration": 30,
+        "memory": 512
+      }
+    }
+  }
