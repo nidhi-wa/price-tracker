@@ -4,7 +4,6 @@
 import * as cheerio from 'cheerio';
 import { extractCurrency, extractDescription, extractPrice } from '../utils';
 const puppeteer = require('puppeteer');
-const chromium = require('@sparticuz/chromium');
 
 export async function scrapeAmazonProduct(url: string) {
   if(!url) return;
@@ -38,7 +37,7 @@ export async function scrapeAmazonProduct(url: string) {
       args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-setuid-sandbox"],
       ignoreDefaultArgs: ["--disable-extensions"],
 
-      executablePath: await chromium.executablePath(),
+      executablePath: puppeteer.executablePath(),
 });
 const page = await browser.newPage();
 
