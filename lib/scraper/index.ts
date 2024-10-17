@@ -4,7 +4,7 @@
 import * as cheerio from 'cheerio';
 import { extractCurrency, extractDescription, extractPrice } from '../utils';
 const puppeteer = require('puppeteer');
-const chromium = require('@sparticuz/chrome');
+const chromium = require('@sparticuz/chromium');
 
 export async function scrapeAmazonProduct(url: string) {
   if(!url) return;
