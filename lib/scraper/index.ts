@@ -37,7 +37,7 @@ export async function scrapeAmazonProduct(url: string) {
       args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-setuid-sandbox"],
       ignoreDefaultArgs: ["--disable-extensions"],
 
-      executablePath: process.env.CHROM_PATH,
+      executablePath: process.env.CHROME_PATH,
 });
 const page = await browser.newPage();
 
