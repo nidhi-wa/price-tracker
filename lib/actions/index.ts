@@ -9,45 +9,112 @@ import { User } from "@/types";
 import { generateEmailBody, sendEmail } from "../nodemailer";
 
 export async function scrapeAndStoreProduct(productUrl: string) {
-  if(!productUrl) return;
+  if (!productUrl) return;
 
   try {
-    connectToDB();
+    await connectToDB();
 
-    const scrapedProduct = await scrapeAmazonProduct(productUrl);
+    // Determine platform and scrape accordingly
+    const isAmazon = productUrl.includes("amazon");
+    const isFlipkart = productUrl.includes("flipkart");
+    
+    let scrapedProduct;
+    let platform = '';
 
-    if(!scrapedProduct) return;
-
-    let product = scrapedProduct;
-
-    const existingProduct = await Product.findOne({ url: scrapedProduct.url });
-
-    if(existingProduct) {
-      const updatedPriceHistory: any = [
-        ...existingProduct.priceHistory,
-        { price: scrapedProduct.currentPrice }
-      ]
-
-      product = {
-        ...scrapedProduct,
-        priceHistory: updatedPriceHistory,
-        lowestPrice: getLowestPrice(updatedPriceHistory),
-        highestPrice: getHighestPrice(updatedPriceHistory),
-        averagePrice: getAveragePrice(updatedPriceHistory),
-      }
+    if (isAmazon) {
+      scrapedProduct = await scrapeAmazonProduct(productUrl);
+      platform = 'amazon';
+    } else if (isFlipkart) {
+      scrapedProduct = await scrapeAmazonProduct(productUrl);
+      platform = 'flipkart';
     }
 
+    if (!scrapedProduct) return;
+
+    // Find existing product in the central collection by a unified identifier, like product title or a common SKU
+    const existingProduct = await Product.findOne({ title: scrapedProduct.title });
+
+    let productData = scrapedProduct;
+    const priceEntry = { price: scrapedProduct.currentPrice };
+
+    if (existingProduct) {
+      // Append to the price history based on platform
+      const updatedPriceHistory : any = platform === 'amazon'
+        ? { amazonPriceHistory: [...existingProduct.amazonPriceHistory, priceEntry] }
+        : { flipkartPriceHistory: [...existingProduct.flipkartPriceHistory, priceEntry] };
+
+      productData = {
+        ...scrapedProduct,
+        ...updatedPriceHistory,
+        priceHistory:updatedPriceHistory.amazonPriceHistory,
+        lowestPrice: getLowestPrice(updatedPriceHistory.amazonPriceHistory),
+        highestPrice: getHighestPrice(updatedPriceHistory.amazonPriceHistory),
+        averagePrice: getAveragePrice(updatedPriceHistory.amazonPriceHistory),
+      };
+    }
+    //} else {
+    //   // Initialize price histories if product is new
+    //   productData = {
+    //     ...scrapedProduct,
+    //     flipkartPriceHistory: platform === 'flipkart' ? [priceEntry] : [],
+    //     amazonPriceHistory: platform === 'amazon' ? [priceEntry] : [],
+    //   };
+    // }
+
+    // Upsert the product document
     const newProduct = await Product.findOneAndUpdate(
-      { url: scrapedProduct.url },
-      product,
+      { title: scrapedProduct.title },
+      productData,
       { upsert: true, new: true }
     );
 
+    // Revalidate path for updated product
     revalidatePath(`/products/${newProduct._id}`);
   } catch (error: any) {
-    throw new Error(`Failed to create/update product: ${error.message}`)
+    throw new Error(`Failed to create/update product: ${error.message}`);
   }
 }
+
+// export async function scrapeAndStoreProduct(productUrl: string) {
+//   if(!productUrl) return;
+
+//   try {
+//     connectToDB();
+
+//     const scrapedProduct = await scrapeAmazonProduct(productUrl);
+
+//     if(!scrapedProduct) return;
+
+//     let product = scrapedProduct;
+
+//     const existingProduct = await Product.findOne({ url: scrapedProduct.url });
+
+//     if(existingProduct) {
+//       const updatedPriceHistory: any = [
+//         ...existingProduct.priceHistory,
+//         { price: scrapedProduct.currentPrice }
+//       ]
+
+//       product = {
+//         ...scrapedProduct,
+//         priceHistory: updatedPriceHistory,
+//         lowestPrice: getLowestPrice(updatedPriceHistory),
+//         highestPrice: getHighestPrice(updatedPriceHistory),
+//         averagePrice: getAveragePrice(updatedPriceHistory),
+//       }
+//     }
+
+//     const newProduct = await Product.findOneAndUpdate(
+//       { url: scrapedProduct.url },
+//       product,
+//       { upsert: true, new: true }
+//     );
+
+//     revalidatePath(`/products/${newProduct._id}`);
+//   } catch (error: any) {
+//     throw new Error(`Failed to create/update product: ${error.message}`)
+//   }
+// }
 
 export async function getProductById(productId: string) {
   try {

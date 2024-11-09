@@ -3,7 +3,7 @@
 import { scrapeAndStoreProduct } from '@/lib/actions';
 import { FormEvent, useState } from 'react'
 
-const isValidAmazonProductURL = (url: string) => {
+const identifyPlatformURL = (url: string): 'amazon' | 'flipkart' | 'unknown' => {
   try {
     const parsedURL = new URL(url);
     const hostname = parsedURL.hostname;
@@ -13,14 +13,22 @@ const isValidAmazonProductURL = (url: string) => {
       hostname.includes ('amazon.') || 
       hostname.endsWith('amazon')
     ) {
-      return true;
+      return 'amazon';
+    }
+    if(
+      hostname.includes('flipkart.com') || 
+      hostname.includes ('flipkart.') || 
+      hostname.endsWith('flipkart')
+    ) {
+      return 'flipkart';
     }
   } catch (error) {
-    return false;
+    return 'unknown';
   }
 
-  return false;
+  return 'unknown';
 }
+
 
 const Searchbar = () => {
   const [searchPrompt, setSearchPrompt] = useState('');
@@ -29,9 +37,9 @@ const Searchbar = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const isValidLink = isValidAmazonProductURL(searchPrompt);
+    const isValidPlatformLink = identifyPlatformURL(searchPrompt);
 
-    if(!isValidLink) return alert('Please provide a valid Amazon link')
+    if(isValidPlatformLink === 'unknown') return alert('Please provide a valid link');
 
     try {
       setIsLoading(true);
@@ -57,7 +65,6 @@ const Searchbar = () => {
         placeholder="Enter product link"
         className="searchbar-input"
       />
-
       <button 
         type="submit" 
         className="searchbar-btn"

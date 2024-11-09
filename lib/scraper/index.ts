@@ -5,26 +5,26 @@ import * as cheerio from 'cheerio';
 import axios from 'axios';
 
 import { extractCurrency, extractDescription, extractPrice } from '../utils';
-// const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer');
 
 export async function scrapeAmazonProduct(url: string) {
   if(!url) return;
 
-  // BrightData proxy configuration
-  const username = String(process.env.BRIGHT_DATA_USERNAME);
-  const password = String(process.env.BRIGHT_DATA_PASSWORD);
-  const port = 22225;
-  const session_id = (1000000 * Math.random()) | 0;
+  // // BrightData proxy configuration
+  // const username = String(process.env.BRIGHT_DATA_USERNAME);
+  // const password = String(process.env.BRIGHT_DATA_PASSWORD);
+  // const port = 22225;
+  // const session_id = (1000000 * Math.random()) | 0;
 
-  const options = {
-    auth: {
-      username: `${username}-session-${session_id}`,
-      password,
-    },
-    host: 'brd.superproxy.io',
-    port,
-    rejectUnauthorized: false,
-  }
+  // const options = {
+  //   auth: {
+  //     username: `${username}-session-${session_id}`,
+  //     password,
+  //   },
+  //   host: 'brd.superproxy.io',
+  //   port,
+  //   rejectUnauthorized: false,
+  // }
 
   try {
 
@@ -34,22 +34,22 @@ export async function scrapeAmazonProduct(url: string) {
     //     return;
     //   }
     // Launch a headless browser
-//     const browser = await puppeteer.launch({
-//       headless: true,
-//       args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-setuid-sandbox"],
-//       ignoreDefaultArgs: ["--disable-extensions"],
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-setuid-sandbox"],
+      ignoreDefaultArgs: ["--disable-extensions"],
 
-//       executablePath: process.env.CHROME_PATH,
-// });
-// const page = await browser.newPage();
+      executablePath: process.env.CHROME_PATH,
+});
+const page = await browser.newPage();
 
-// // Set a custom User-Agent string for your scraper
-// const userAgent = 'MyScraperBot/1.0 (+https://webastonish.com/; please-allow-for-Learning-purpose-only)';
-// await page.setUserAgent(userAgent);
+// Set a custom User-Agent string for your scraper
+const userAgent = 'MyScraperBot/1.0 (+https://webastonish.com/; please-allow-for-Learning-purpose-only)';
+await page.setUserAgent(userAgent);
 
-// // Navigate to the website
-// await page.goto(url,{ waitUntil: 'networkidle2' });
-const response = await axios.get(url, options);
+// Navigate to the website
+await page.goto(url,{ waitUntil: 'networkidle2' });
+const response = await axios.get(url);
     // Fetch the product page
 
     const $ = cheerio.load(response.data);
@@ -92,6 +92,8 @@ const response = await axios.get(url, options);
       title,
       currentPrice: Number(currentPrice) || Number(originalPrice),
       originalPrice: Number(originalPrice) || Number(currentPrice),
+      amazonPriceHistory: [],
+      flipkartPriceHistory: [],
       priceHistory: [],
       discountRate: Number(discountRate),
       category: 'category',
@@ -103,7 +105,8 @@ const response = await axios.get(url, options);
       highestPrice: Number(originalPrice) || Number(currentPrice),
       averagePrice: Number(currentPrice) || Number(originalPrice),
     }
-    // await browser.close();
+    await browser.close();
+    console.log(data,'data');
     return data;
   } catch (error: any) {
     console.log(error);

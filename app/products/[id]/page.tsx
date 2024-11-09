@@ -1,6 +1,7 @@
 import Modal from "@/components/Modal";
 import PriceInfoCard from "@/components/PriceInfoCard";
 import ProductCard from "@/components/ProductCard";
+import PriceHistoryChart from '@/components/PriceHistoryChart';
 import { getProductById, getSimilarProducts } from "@/lib/actions"
 import { formatNumber } from "@/lib/utils";
 import { Product } from "@/types";
@@ -18,6 +19,35 @@ const ProductDetails = async ({ params: { id } }: Props) => {
   if(!product) redirect('/')
 
   const similarProducts = await getSimilarProducts(id);
+  function getPurchaseRecommendation() {
+    if (product.currentPrice < product.lowestPrice || product.currentPrice < product.averagePrice * 0.9) {
+      return "Recommended to buy";
+    } else if (product.currentPrice > product.averagePrice * 1.1) {
+      return "Price is high, consider waiting";
+    }
+    return "Monitor for price changes";
+  }
+
+  const filteredPriceHistory = product.amazonPriceHistory.map((item) => ({
+    price: item.price,
+    date: item.date,
+  }));
+  const formattedPriceHistory = filteredPriceHistory.map(item => {
+    const dateObj = new Date(item.date);
+  
+    return {
+      ...item,
+      displayDate: dateObj.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short'
+      }),
+      fullDate: dateObj.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })
+    };
+  });
 
   return (
     <div className="product-container">
@@ -154,6 +184,8 @@ const ProductDetails = async ({ params: { id } }: Props) => {
           <Modal productId={id} />
         </div>
       </div>
+      <PriceHistoryChart priceData={formattedPriceHistory}/>
+      <div><h1>{getPurchaseRecommendation()}</h1></div>
 
       <div className="flex flex-col gap-16">
         <div className="flex flex-col gap-5">
