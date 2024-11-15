@@ -166,8 +166,8 @@ export async function scrapeAmazon(url:string) {
 
         const title = document.querySelector('span.VU-ZEz')?.textContent?.trim() || 'Title not found';
         const imageSelectors = [
-          'div.gqcSqV.YGE0gZ img',
           'div._4WELSP._6lpKCl img',
+           'div.gqcSqV.YGE0gZ img',
           'div._1r7vXj img',  // Another example selector
           'img._2rXOwJ'       // Another example selector
         ];

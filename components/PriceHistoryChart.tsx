@@ -7,19 +7,25 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 interface PriceHistoryChartProps {
-  priceData: { displayDate: string; fullDate: string; price: number }[];
+  amazonPriceData: { displayDate: string; fullDate: string; price: number }[];
+  flipkartPriceData: { displayDate: string; fullDate: string; price: number }[];
 }
 
-const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ priceData }) => {
+const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ amazonPriceData,flipkartPriceData }) => {
   const data = {
-    labels: priceData.map((entry) => entry.displayDate),
+    labels:amazonPriceData.map((entry) => entry.displayDate),
     datasets: [
       {
-        label: 'Price History',
-        data: priceData.map((entry) => entry.price),
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        fill: true,
+        label: 'Amazon',
+        data:amazonPriceData.map((entry) => entry.price),
+        borderColor: 'blue',
+        fill: false,
+      },
+      {
+        label: 'Flipkart',
+        data: flipkartPriceData.map((entry) => entry.price),
+        borderColor: 'green',
+        fill: false,
       },
     ],
   };
@@ -38,7 +44,7 @@ const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ priceData }) => {
         callbacks: {
           title: (tooltipItems: any) => {
             const index = tooltipItems[0].dataIndex;
-            return priceData[index].fullDate; // Display fullDate in the tooltip
+            return amazonPriceData[index].fullDate; // Display fullDate in the tooltip
           },
         },
       },

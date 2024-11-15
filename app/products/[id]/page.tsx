@@ -1,6 +1,8 @@
+
 import Modal from "@/components/Modal";
 import PriceInfoCard from "@/components/PriceInfoCard";
 import ProductCard from "@/components/ProductCard";
+import ProductSearchBar from "@/components/ProductSearchBar"
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import { getProductById, getSimilarProducts } from "@/lib/actions"
 import { formatNumber } from "@/lib/utils";
@@ -8,6 +10,7 @@ import { Product } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
 
 type Props = {
   params: { id: string }
@@ -17,6 +20,21 @@ const ProductDetails = async ({ params: { id } }: Props) => {
   const product: Product = await getProductById(id);
 
   if(!product) redirect('/')
+
+    const response = await fetch('http://localhost:3000/api/productdata', {
+      method: 'GET', // specify the method explicitly
+      cache: 'no-store', // ensures fresh data each time
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(data);
+    console.log(data.price);
+  
+
 
   const similarProducts = await getSimilarProducts(id);
   function getPurchaseRecommendation() {
@@ -28,26 +46,29 @@ const ProductDetails = async ({ params: { id } }: Props) => {
     return "Monitor for price changes";
   }
 
-  const filteredPriceHistory = product.amazonPriceHistory.map((item) => ({
+  const amazonPriceHistory = product.amazonPriceHistory.map((item) => ({
     price: item.price,
     date: item.date,
   }));
-  const formattedPriceHistory = filteredPriceHistory.map(item => {
-    const dateObj = new Date(item.date);
+  const flipkartPriceHistory = product.flipkartPriceHistory.map((item) => ({
+    price: item.price,
+    date: item.date,
+  }));
+ 
+  const formatPriceHistory = (priceHistory:any) => 
+    priceHistory.map((item:any) => {
+      const dateObj = new Date(item.date);
+      return {
+        price: item.price,
+        displayDate: dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        fullDate: dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      };
+    });
   
-    return {
-      ...item,
-      displayDate: dateObj.toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short'
-      }),
-      fullDate: dateObj.toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
-    };
-  });
+  const formattedAmazonHistory = formatPriceHistory(amazonPriceHistory);
+  const formattedFlipkartHistory = formatPriceHistory(flipkartPriceHistory);
+
+ 
 
   return (
     <div className="product-container">
@@ -184,7 +205,8 @@ const ProductDetails = async ({ params: { id } }: Props) => {
           <Modal productId={id} />
         </div>
       </div>
-      <PriceHistoryChart priceData={formattedPriceHistory}/>
+       <ProductSearchBar title={product.title}/>
+      <PriceHistoryChart amazonPriceData={formattedAmazonHistory}  flipkartPriceData={formattedFlipkartHistory}/>
       <div><h1>{getPurchaseRecommendation()}</h1></div>
 
       <div className="flex flex-col gap-16">
