@@ -26,6 +26,13 @@ const productSchema = new mongoose.Schema(
         date: { type: Date, default: Date.now },
       },
     ],
+    competitorPriceHistory: [
+      {
+        price: { type: Number, required: true },
+        date: { type: Date, default: Date.now },
+        url:{type : String}
+      },
+    ],
     lowestPrice: { type: Number },
     highestPrice: { type: Number },
     averagePrice: { type: Number },

@@ -2,6 +2,11 @@ export type PriceHistoryItem = {
   price: number;
   date: string;
 };
+export type competitorPriceHistoryItem ={
+  price: number;
+  date: string;
+  url: string;
+}
 
 export type User = {
   email: string;
@@ -18,6 +23,7 @@ export type Product = {
   amazonPriceHistory: PriceHistoryItem[] | [];
   flipkartPriceHistory: PriceHistoryItem[] | [];
   priceHistory: PriceHistoryItem[] | [];
+  competitorPriceHistory: competitorPriceHistoryItem[] | [];
   highestPrice: number;
   lowestPrice: number;
   averagePrice: number;

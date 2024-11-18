@@ -4,6 +4,7 @@ import cron from 'node-cron';
 import { getLowestPrice, getHighestPrice, getAveragePrice, getEmailNotifType } from "@/lib/utils";
 import { connectToDB } from "@/lib/mongoose";
 import Product from "@/lib/models/product.model";
+import {scrapeProductTitle} from "@/lib/scraper/flipkart";
 import { scrapeAmazonProduct } from "@/lib/scraper";
 import { generateEmailBody, sendEmail } from "@/lib/nodemailer";
 
@@ -23,9 +24,30 @@ export async function GET(request: Request) {
     const updatedProducts = await Promise.all(
       products.map(async (currentProduct) => {
         // Scrape product
-        const scrapedProduct = await scrapeAmazonProduct(currentProduct.url);
+        const scrapedProduct = await scrapeAmazonProduct(currentProduct.url); 
 
         if (!scrapedProduct) return;
+
+       // Initialize updated price histories
+    let updatedCompetitorHistory = currentProduct.competitorPriceHistory || [];
+    if (
+      currentProduct.competitorPriceHistory &&
+      currentProduct.competitorPriceHistory.length > 0
+    ) {
+      const competitorUrl = currentProduct.competitorPriceHistory[0]?.url;
+      if (competitorUrl) {
+        // Scrape competitor product
+        const scrapedCompetitorData = await scrapeProductTitle(competitorUrl);
+        if (scrapedCompetitorData) {
+          updatedCompetitorHistory = [
+            ...currentProduct.competitorPriceHistory,
+            {
+              price: scrapedCompetitorData.price,
+            },
+          ];
+        }
+      }
+    }
 
         const updatedPriceHistory = [
           ...currentProduct.priceHistory,
@@ -37,6 +59,7 @@ export async function GET(request: Request) {
         const product = {
           ...scrapedProduct,
           priceHistory: updatedPriceHistory,
+          competitorPriceHistory: updatedCompetitorHistory ,
           lowestPrice: getLowestPrice(updatedPriceHistory),
           highestPrice: getHighestPrice(updatedPriceHistory),
           averagePrice: getAveragePrice(updatedPriceHistory),
@@ -83,12 +106,12 @@ export async function GET(request: Request) {
 }
 
 
-cron.schedule('* * * * *', async () => {
+cron.schedule("*/5 * * * *", async () => {
   console.log('Running cron job: Scraping products...');
   
   try {
     // Call the GET function directly to scrape products
-    const request = new Request('http://localhost:3000/app/api/cron');  // Mock Request object
+    const request = new Request('http://localhost:3001/api/cron');  // Mock Request object
     const response = await GET(request);
     
     console.log('Cron job completed:', await response.json());

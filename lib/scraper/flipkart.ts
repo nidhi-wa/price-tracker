@@ -60,6 +60,7 @@ export async function scrapeProductTitle(url:string){
     selectors[platform]
   );
       const data = {
+        url,
         title:product.title,
         price:product.finalPrice
       }

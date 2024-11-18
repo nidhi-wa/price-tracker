@@ -63,7 +63,7 @@ export async function scrapeAndStoreProduct(productUrl: string) {
 
     // Upsert the product document
     const newProduct = await Product.findOneAndUpdate(
-      { title: scrapedProduct.title },
+      {  url: scrapedProduct.url },
       productData,
       { upsert: true, new: true }
     );

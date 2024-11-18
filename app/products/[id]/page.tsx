@@ -21,19 +21,6 @@ const ProductDetails = async ({ params: { id } }: Props) => {
 
   if(!product) redirect('/')
 
-    const response = await fetch('http://localhost:3000/api/productdata', {
-      method: 'GET', // specify the method explicitly
-      cache: 'no-store', // ensures fresh data each time
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log(data);
-    console.log(data.price);
-  
 
 
   const similarProducts = await getSimilarProducts(id);
@@ -54,6 +41,11 @@ const ProductDetails = async ({ params: { id } }: Props) => {
     price: item.price,
     date: item.date,
   }));
+  const competitorPriceHistory = product.competitorPriceHistory
+  .map((item) => ({
+    price: item.price,
+    date: item.date,
+  }));
  
   const formatPriceHistory = (priceHistory:any) => 
     priceHistory.map((item:any) => {
@@ -67,6 +59,12 @@ const ProductDetails = async ({ params: { id } }: Props) => {
   
   const formattedAmazonHistory = formatPriceHistory(amazonPriceHistory);
   const formattedFlipkartHistory = formatPriceHistory(flipkartPriceHistory);
+  const formattedCompetitorPriceHistory = formatPriceHistory( competitorPriceHistory);
+
+  const selectedSource = product.url.includes("amazon")
+    ? "amazon"
+    : "flipkart"
+    
 
  
 
@@ -205,8 +203,8 @@ const ProductDetails = async ({ params: { id } }: Props) => {
           <Modal productId={id} />
         </div>
       </div>
-       <ProductSearchBar title={product.title}/>
-      <PriceHistoryChart amazonPriceData={formattedAmazonHistory}  flipkartPriceData={formattedFlipkartHistory}/>
+       <ProductSearchBar title={product.title} productId={id}/>
+      <PriceHistoryChart amazonPriceData={formattedAmazonHistory}  flipkartPriceData={formattedFlipkartHistory} competitorPriceData={ formattedCompetitorPriceHistory}  selectedSource={selectedSource}/>
       <div><h1>{getPurchaseRecommendation()}</h1></div>
 
       <div className="flex flex-col gap-16">
